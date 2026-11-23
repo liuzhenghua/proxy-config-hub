@@ -1,1 +1,1 @@
-{"version":1,"include":["/api/links","/sub/*"],"exclude":[]}
+{"version":1,"include":["/api/links","/sub/*","/config/*"],"exclude":[]}

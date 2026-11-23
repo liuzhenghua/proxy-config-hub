@@ -41,4 +41,10 @@ npm run dev
 
 本地订阅解密可在未跟踪的 `.dev.vars` 中设置运行时变量。使用 Pages 项目时，可运行 `npm run dev:pages` 预览。
 
-`public/config/` 包含 [tech 仓库](https://github.com/liuzhenghua/tech/tree/main/infra)对应文件的快照。更新规则时，从对应的 `infra/<客户端>/` 同步原文件。如果新增或移除文件，同时更新 `public/app.js` 中的清单。
+## 从 tech 实时读取配置
+
+在 GitHub 创建 fine-grained personal access token，仓库只选 `liuzhenghua/tech`，仓库权限设置 `Contents: Read-only`。在 Cloudflare 的生产 Worker 中把令牌添加为运行时 Secret `TECH_REPO_TOKEN`。GitHub 认证细节见 [Repository contents API](https://docs.github.com/en/rest/repos/contents#get-repository-content)。
+
+配置库仍使用本站的 `/config/…` 地址。设置令牌后，每次下载请求都会从 `tech` 的 `main` 分支读取对应文件。GitHub 返回错误时，下载会失败并提示。未设置令牌时，继续使用 `public/config/` 中现有的快照。
+
+`public/config-catalog.js` 同时定义首页条目和公开下载的文件范围。新增公开配置时更新这份清单。
