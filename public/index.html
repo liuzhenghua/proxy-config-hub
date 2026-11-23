@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proxy Config Hub · 代理配置中心</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="shell bar">
+      <a class="brand" href="/">Proxy Config Hub</a>
+      <nav aria-label="页面导航">
+        <a href="#configs">配置库</a>
+        <a href="#generator">订阅解密</a>
+      </nav>
+    </div>
+  </header>
+  <main class="shell">
+    <div class="intro">
+      <h1>代理配置中心</h1>
+      <p>复制配置地址，或为加密的节点订阅生成可自动刷新的链接。</p>
+    </div>
+    <section id="configs" aria-labelledby="configs-title">
+      <div class="section-heading">
+        <h2 id="configs-title">配置库</h2>
+        <p>在 OpenClash 的「运行状态 → 覆写模块」中，从 URL 导入所需模块。</p>
+      </div>
+      <div id="config-list"></div>
+    </section>
+    <section id="generator" class="generator" aria-labelledby="generator-title">
+      <div class="section-heading">
+        <h2 id="generator-title">订阅解密</h2>
+        <p>将生成的链接粘贴到 OpenClash 的「配置订阅 → 订阅地址」。上游需要提供 Clash 兼容的订阅内容。</p>
+      </div>
+      <form id="generate-form" autocomplete="off">
+        <label for="upstream">原订阅 URL</label>
+        <input type="url" id="upstream" placeholder="https://…" required maxlength="2048" spellcheck="false">
+        <div class="label-row">
+          <label for="password">上游登录密码</label>
+          <button type="button" class="text-button" id="toggle-password" aria-controls="password">显示密码</button>
+        </div>
+        <input type="password" id="password" placeholder="明文订阅可留空" maxlength="512" autocomplete="off">
+        <button type="submit" class="primary">生成订阅链接</button>
+      </form>
+      <p id="generate-status" class="feedback" role="status"></p>
+      <div class="result" id="result" hidden>
+        <label for="output">配置订阅地址</label>
+        <div class="result-row">
+          <input id="output" readonly>
+          <button type="button" class="primary" id="copy-output">复制订阅链接</button>
+        </div>
+        <p>持有此链接的人可以下载解密后的订阅，请妥善保存。</p>
+      </div>
+    </section>
+  </main>
+  <p id="toast" class="toast" role="status"></p>
+</body>
+</html>

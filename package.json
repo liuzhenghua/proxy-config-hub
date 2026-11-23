@@ -1,0 +1,13 @@
+{
+  "name": "proxy-config-hub",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "dev": "wrangler dev",
+    "dev:pages": "wrangler pages dev public --compatibility-flag=nodejs_compat"
+  },
+  "devDependencies": {
+    "wrangler": "4.166.0"
+  }
+}

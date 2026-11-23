@@ -1,0 +1,79 @@
+# Clash Verge Rev extension: replace proxy groups and selected DNS fields.
+# Subscription rules are preserved; their target groups must exist below.
+
+# Mihomo v1.19.33 may keep a proxy alive when the second unified-delay probe times out.
+unified-delay: false
+
+profile:
+  store-selected: true
+
+proxy-groups:
+  - name: Select-1
+    type: select
+    include-all: true
+  - name: Select-2
+    type: select
+    include-all: true
+  - name: Select-3
+    type: select
+    include-all: true
+  - name: Select-4
+    type: select
+    include-all: true
+  - name: Select-5
+    type: select
+    include-all: true
+  - name: Auto
+    type: url-test
+    include-all: true
+    exclude-filter: "剩余流量|剩余[：:]|流量[：:]|套餐|到期|过期|有效期|重置|更新时间|官网|官方网站|订阅地址|(^|[^0-9.])([4-9]|10)倍率|(?i:traffic|expire|expiry|expiration|reset|remaining|official website)"
+    url: https://www.gstatic.com/generate_204
+    interval: 43200
+    timeout: 2000
+    lazy: false
+    expected-status: 204
+    tolerance: 300
+    max-failed-times: 1
+  - name: PROXY
+    type: fallback
+    proxies:
+      - Select-1
+      - Select-2
+      - Select-3
+      - Select-4
+      - Select-5
+      - Auto
+    url: https://www.gstatic.com/generate_204
+    interval: 600
+    timeout: 2000
+    lazy: false
+    expected-status: 204
+    max-failed-times: 1
+
+dns:
+  enable: true
+  # DoH 域名自身的 bootstrap DNS
+  default-nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+  # 默认解析：阿里公共 DNS（UDP）
+  nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+  # 代理节点域名也使用阿里公共 DNS（UDP）
+  proxy-server-nameserver:
+    - 223.5.5.5
+    - 223.6.6.6
+  # 按域名指定境外 DNS，避免改变其他域名的默认解析
+  nameserver-policy:
+    "+.google.com":
+      - "https://1.1.1.1/dns-query#PROXY"
+      - "https://8.8.8.8/dns-query#PROXY"
+  # 普通域名先查默认上游，地址查询失败或没有 IP 时再经代理查询
+  fallback:
+    - "https://8.8.8.8/dns-query#PROXY"
+    - "https://1.1.1.1/dns-query#PROXY"
+  fallback-lazy-query: true
+  fallback-filter:
+    geoip: false
+  cache-algorithm: arc

@@ -1,0 +1,8 @@
+{
+  "name": "proxy-config-hub",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-23",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": false },
+  "assets": { "directory": "./public", "binding": "ASSETS" }
+}
