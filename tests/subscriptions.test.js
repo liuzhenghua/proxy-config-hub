@@ -110,11 +110,52 @@ test('rejects modified tokens and tokens encrypted with a rotated key', async ()
   assert.equal((await handleSubscription(new Request(base + path), rotated, assert.fail)).status, 404);
 });
 
-test('rejects upstream redirects and oversized bodies', async () => {
+test('follows relative and cross-origin HTTPS redirects with a shared timeout', async () => {
+  const path = await generate();
+  const sources = [url, 'https://provider.example/next', 'https://other.example/final'];
+  const targets = ['/next', sources[2]];
+  let calls = 0;
+  let signal;
+  const response = await handleSubscription(new Request(base + path), env, (target, options) => {
+    assert.equal(target, sources[calls]);
+    assert.equal(options.redirect, 'manual');
+    signal ??= options.signal;
+    assert.equal(options.signal, signal);
+    const location = targets[calls++];
+    return location ? new Response(null, { status: 302, headers: { Location: location } }) : encryptedResponse();
+  });
+  assert.equal(calls, 3);
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), plaintext);
+});
+
+test('rejects unsafe redirects, redirect loops, and oversized bodies', async () => {
   const path = await generate();
   const request = new Request(base + path);
-  const redirect = () => Response.redirect('https://other.example');
+  for (const target of ['http://provider.example/next', 'https://127.0.0.1']) {
+    let calls = 0;
+    const response = await handleSubscription(request, env, () => {
+      calls++;
+      return Response.redirect(target);
+    });
+    assert.equal(response.status, 502);
+    assert.equal(calls, 1);
+  }
+  let calls = 0;
+  const loop = await handleSubscription(request, env, () => {
+    calls++;
+    return Response.redirect(url);
+  });
+  assert.equal(loop.status, 502);
+  assert.equal(calls, 4);
   const oversized = () => new Response(new Uint8Array(4 * 1024 * 1024 + 1));
-  assert.equal((await handleSubscription(request, env, redirect)).status, 502);
   assert.equal((await handleSubscription(request, env, oversized)).status, 502);
+});
+
+test('reports a failed upstream status without returning the upstream body', async () => {
+  const path = await generate();
+  const result = await handleSubscription(new Request(base + path), env, () =>
+    new Response('private upstream details', { status: 403 }));
+  assert.equal(result.status, 502);
+  assert.deepEqual(await result.json(), { error: '上游订阅返回 HTTP 403' });
 });

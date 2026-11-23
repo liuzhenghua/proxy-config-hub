@@ -128,25 +128,48 @@ async function generate(request, env) {
   return Response.json({ path: '/sub/' + token }, { headers: noStore });
 }
 
+const redirectStatuses = new Set([301, 302, 303, 307, 308]);
+const maxRedirects = 3;
+
+async function downloadUpstream(url, env, fetchUpstream) {
+  const signal = AbortSignal.timeout(12000);
+  let current = url;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    let response;
+    try {
+      response = await fetchUpstream(current.href, {
+        headers: { 'User-Agent': env.UPSTREAM_USER_AGENT || 'Clash' },
+        redirect: 'manual',
+        cache: 'no-store',
+        signal,
+      });
+    } catch {
+      throw new RequestError(502, '无法连接上游订阅');
+    }
+    if (response.ok) return response;
+    await response.body?.cancel().catch(() => {});
+    if (!redirectStatuses.has(response.status)) {
+      throw new RequestError(502, '上游订阅返回 HTTP ' + response.status);
+    }
+    if (hop === maxRedirects) throw new RequestError(502, '上游订阅重定向次数过多');
+    current = redirectTarget(current, response.headers.get('Location'));
+  }
+}
+
+function redirectTarget(current, location) {
+  if (!location) throw new RequestError(502, '上游重定向缺少目标地址');
+  try {
+    return subscriptionUrl(new URL(location, current).href);
+  } catch {
+    throw new RequestError(502, '上游重定向目标须使用公网域名和 HTTPS');
+  }
+}
+
 async function fetchSubscription(request, token, env, fetchUpstream) {
   if (request.method !== 'GET') return methodNotAllowed('GET');
   const data = await unseal(token, await tokenKey(env));
   const upstream = subscriptionUrl(data.url);
-  let response;
-  try {
-    response = await fetchUpstream(upstream.href, {
-      headers: { 'User-Agent': env.UPSTREAM_USER_AGENT || 'Clash' },
-      redirect: 'manual',
-      cache: 'no-store',
-      signal: AbortSignal.timeout(12000),
-    });
-  } catch {
-    throw new RequestError(502, '无法连接上游订阅');
-  }
-  if (!response.ok) {
-    await response.body?.cancel().catch(() => {});
-    throw new RequestError(502, '上游订阅下载失败或返回重定向');
-  }
+  const response = await downloadUpstream(upstream, env, fetchUpstream);
 
   let content;
   try {

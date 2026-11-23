@@ -27,7 +27,7 @@ Cloudflare 上的个人代理配置下发站。首页可一键复制 OpenClash �
 
 配置文件即使未设置 Secrets 也可公开下载。生成的订阅链接是持有者凭证，其令牌由 AES-256-GCM 加密并验证，包含原始订阅 URL 和密码。链接支持长期自动刷新。更换 `LINK_KEY` 会让所有旧链接失效。若链接泄露，也可以在上游重置订阅凭证。部署时请勿将请求体与完整订阅路径写入访问日志。
 
-直接在表单填写使用公网域名的 HTTPS 订阅 URL。上游返回重定向时下载失败，请使用直接返回配置的订阅地址。上游响应头 `Subscription-Encryption: true` 时，按 Karing 讨论中的格式解密，即以 UTF-8 密码的 MD5 原始 16 字节为 AES-128-CBC 密钥，Base64 解码后前 16 字节为 IV。该格式只用于上游兼容。参见 [Karing #1346](https://github.com/KaringX/karing/issues/1346)。
+直接在表单填写使用公网域名的 HTTPS 订阅 URL。最多跟随三次使用公网域名的 HTTPS 重定向。下载失败时会返回上游 HTTP 状态码。上游响应头 `Subscription-Encryption: true` 时，按 Karing 讨论中的格式解密，即以 UTF-8 密码的 MD5 原始 16 字节为 AES-128-CBC 密钥，Base64 解码后前 16 字节为 IV。该格式只用于上游兼容。参见 [Karing #1346](https://github.com/KaringX/karing/issues/1346)。
 
 ## 开发与更新
 
